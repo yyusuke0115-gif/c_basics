@@ -1,0 +1,19 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+// ニューラルネットワークの1層分を表す構造体
+typedef struct {
+    int input_size;   // 前の層のノード数
+    int output_size;  // この層のノード数
+    double **weights; // 重み行列 (output_size x input_size)
+    double *biases;   // バイアス配列 (output_size)
+    double *output;   // 計算結果（活性化関数適用後）
+    double *delta;    // 誤差逆伝播で使う「誤差」の保持用
+} Layer;
+
+// ネットワーク全体を管理する構造体
+typedef struct {
+    int num_layers;
+    Layer *layers;
+} Network;
