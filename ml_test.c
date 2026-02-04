@@ -1,64 +1,89 @@
 #include <stdio.h>
 
-// Number of training data points
+// Number of data samples
 #define N 4
+// Number of features (input variables)
+// Here we use 2 features: Study Hours and Sleep Hours
+#define FEATURES 2
 
 int main() {
     // 1. Training Data
-    // x = Input, y = Target (Correct Answer)
-    // We want the machine to learn the relationship y = 2x
-    double x[N] = {1.0, 2.0, 3.0, 4.0};
-    double y[N] = {2.0, 4.0, 6.0, 8.0}; 
+    // x[sample_index][feature_index]
+    // {Study Hours, Sleep Hours}
+    double x[N][FEATURES] = {
+        {1.0, 5.0},  // Student A: 1h study, 5h sleep (Sleep deprived)
+        {2.0, 6.0},  // Student B: 2h study, 6h sleep
+        {3.0, 7.0},  // Student C: 3h study, 7h sleep
+        {4.0, 8.0}   // Student D: 4h study, 8h sleep (Ideal)
+    };
+
+    // Target Data (Test Scores)
+    // Higher study and sleep time -> Higher score
+    double y[N] = {15.0, 25.0, 35.0, 45.0};
 
     // 2. Initialize Parameters
-    double w = 0.0; // Weight (Slope)
-    double b = 0.0; // Bias (Intercept)
+    // We need a weight for every feature (w1, w2)
+    double w[FEATURES] = {0.0, 0.0};
+    double b = 0.0;
 
     // Hyperparameters
-    double learning_rate = 0.01; // How big of a step to take
-    int epochs = 1000;           // Number of times to loop through the data
+    double learning_rate = 0.01;
+    int epochs = 2000; // More epochs because it's more complex
 
-    printf("Start Training: Initial w=%.2f, b=%.2f\n", w, b);
+    printf("Start Training: Multiple Regression (Features=%d)\n", FEATURES);
 
-    // 3. Training Loop (Gradient Descent)
+    // 3. Training Loop
     for (int i = 0; i < epochs; i++) {
-        double dw = 0.0; // Gradient for w
-        double db = 0.0; // Gradient for b
+        double dw[FEATURES] = {0.0, 0.0}; // Gradients for w1, w2
+        double db = 0.0;
 
-        // Loop through all data points
+        // Loop through all data samples
         for (int j = 0; j < N; j++) {
-            // Forward pass: Calculate prediction
-            double predict = w * x[j] + b;
             
-            // Calculate Error: (Prediction - Target)
+            // --- Calculate Prediction (Dot Product) ---
+            // predict = w1*x1 + w2*x2 + ... + b
+            double predict = b;
+            for (int k = 0; k < FEATURES; k++) {
+                predict += w[k] * x[j][k];
+            }
+
+            // Calculate Error
             double error = predict - y[j];
 
-            // Accumulate gradients (Derived from Mean Squared Error)
-            dw += error * x[j];
+            // --- Accumulate Gradients ---
+            for (int k = 0; k < FEATURES; k++) {
+                // Gradient for w[k] += error * input[k]
+                dw[k] += error * x[j][k];
+            }
             db += error;
         }
 
-        // Average the gradients
-        dw = (2.0 / N) * dw;
-        db = (2.0 / N) * db;
+        // Update Parameters (Average the gradients)
+        for (int k = 0; k < FEATURES; k++) {
+            w[k] = w[k] - learning_rate * (2.0 / N * dw[k]);
+        }
+        b = b - learning_rate * (2.0 / N * db);
 
-        // Update parameters (Move opposite to the gradient)
-        w = w - learning_rate * dw;
-        b = b - learning_rate * db;
-
-        // Print progress every 100 epochs
-        if ((i + 1) % 100 == 0) {
-            printf("Epoch %d: w=%.4f, b=%.4f\n", i + 1, w, b);
+        // Print progress
+        if ((i + 1) % 400 == 0) {
+            printf("Epoch %d: w1=%.2f, w2=%.2f, b=%.2f\n", i + 1, w[0], w[1], b);
         }
     }
 
     printf("\nTraining Complete!\n");
-    printf("Final Model: y = %.4fx + %.4f\n", w, b);
+    printf("Model Formula: y = %.2fx1 + %.2fx2 + %.2f\n", w[0], w[1], b);
 
-    // 4. Prediction on new data
-    double new_x = 5.0;
-    double prediction = w * new_x + b;
-    printf("Prediction: If x=%.1f, predicted y is %.2f\n", new_x, prediction);
+    // 4. Prediction on New Data
+    // What if someone studies 5 hours and sleeps 8 hours?
+    double new_x[FEATURES] = {5.0, 8.0};
+    
+    double prediction = b;
+    for (int k = 0; k < FEATURES; k++) {
+        prediction += w[k] * new_x[k];
+    }
+
+    printf("Prediction Test: Study %.1fh, Sleep %.1fh -> Predicted Score: %.2f\n", 
+           new_x[0], new_x[1], prediction);
 
     return 0;
 }
